@@ -30,7 +30,7 @@ export class UserService {
       );
   }
 
-  async create(createUserDto: CreateUserDto) {
+  public async create(createUserDto: CreateUserDto) {
     await this.existUser(createUserDto);
 
     const cognitoUserId = await this.awsService.registerUser(
