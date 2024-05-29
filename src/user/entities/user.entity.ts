@@ -1,37 +1,14 @@
-import {
-  Column,
-  CreateDateColumn,
-  Entity,
-  PrimaryGeneratedColumn,
-  UpdateDateColumn,
-  Index,
-} from 'typeorm';
-
-// Update entity
-// Indexes one, group, with condition
-// Uniq contstraint
+import { EntityAutoDateAndId } from 'src/entities/entities';
+import { Column, Entity } from 'typeorm';
 
 @Entity('user')
-export class User {
-  @PrimaryGeneratedColumn()
-  id: number;
-
-  @Column()
-  @Index('email')
+export class User extends EntityAutoDateAndId {
+  @Column({ name: 'email', type: 'varchar', length: 255, unique: true })
   email: string;
 
-  @Column({ name: 'username', type: 'varchar', length: 36 })
+  @Column({ name: 'username', type: 'varchar', length: 36, unique: true })
   username: string;
 
-  @Column()
-  password: string;
-
-  @Column()
+  @Column({ name: 'cognito_id', type: 'uuid', unique: true })
   cognitoId: string;
-
-  @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
 }

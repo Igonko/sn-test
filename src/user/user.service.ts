@@ -4,7 +4,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { AwsService } from '../aws/aws.service';
 import { Repository } from 'typeorm';
-import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UserService {
@@ -13,7 +12,7 @@ export class UserService {
     private readonly awsService: AwsService,
   ) {}
 
-  async create(createUserDto: CreateUserDto) {
+  private async existUser(createUserDto: CreateUserDto) {
     const isUserExist = await this.userRepository.findOne({
       where: [
         {
@@ -29,24 +28,22 @@ export class UserService {
       throw new BadRequestException(
         'User with this email/username already exists',
       );
+  }
 
-    const saltRounds = 10;
-    const salt = await bcrypt.genSalt(saltRounds);
-    const hash = await bcrypt.hash(createUserDto.password, salt);
+  async create(createUserDto: CreateUserDto) {
+    await this.existUser(createUserDto);
+
     const cognitoUserId = await this.awsService.registerUser(
       createUserDto.email,
-      hash,
+      createUserDto.password,
     );
 
     try {
       const user = await this.userRepository.save({
         email: createUserDto.email,
         username: createUserDto.username,
-        password: hash,
         cognitoId: cognitoUserId,
       });
-
-      delete user.password;
 
       return user;
     } catch (error) {

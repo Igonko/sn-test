@@ -29,8 +29,7 @@ export class AwsService {
 
     try {
       const result = await this.cognito.signUp(params).promise();
-      console.log(result);
-      return result.UserSub; // Cognito user ID
+      return result.UserSub;
     } catch (error) {
       throw new InternalServerErrorException(
         'Error registering user with Cognito',
