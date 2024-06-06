@@ -1,5 +1,8 @@
 version: '3.8'
 
+volumes:
+  pgdata:
+
 services:
   db:
     image: postgres
@@ -14,7 +17,7 @@ services:
     volumes:
       - ./pgdata:/var/lib/postgresql/data
     ports:
-      - '5433:${DB_PORT}'
+      - '${DB_PORT}:${DB_PORT}'
 
   app:
     build:

@@ -1,15 +1,22 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  NotFoundException,
+  forwardRef,
+} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
-import { AwsService } from '../aws/aws.service';
+import { AwsCognitoService } from '../aws/aws-cognito.service';
 import { Repository } from 'typeorm';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User) private readonly userRepository: Repository<User>,
-    private readonly awsService: AwsService,
+    @Inject(forwardRef(() => AwsCognitoService))
+    private readonly awsService: AwsCognitoService,
   ) {}
 
   private async existUser(createUserDto: CreateUserDto) {
@@ -52,19 +59,18 @@ export class UserService {
     }
   }
 
-  // findAll() {
-  //   return `This action returns all user`;
-  // }
+  public async updateConfirm(email: string, confirmed: boolean) {
+    const user = await this.userRepository.findOne({ where: { email } });
+    if (!user) {
+      throw new NotFoundException(`User with not found`);
+    }
 
-  // findOne(id: number) {
-  //   return `This action returns a #${id} user`;
-  // }
-
-  // update(id: number, updateUserDto: UpdateUserDto) {
-  //   return `This action updates a #${id} user`;
-  // }
-
-  // remove(id: number) {
-  //   return `This action removes a #${id} user`;
-  // }
+    try {
+      user.confirmed = confirmed;
+      await this.userRepository.update({ email }, { confirmed: true });
+      return { ...user, confirmed: true };
+    } catch (error) {
+      throw new BadRequestException(`Error confirming user sign-up: ${error}`);
+    }
+  }
 }
