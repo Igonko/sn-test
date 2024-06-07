@@ -1,4 +1,5 @@
-import { EntityAutoDateAndId } from 'src/entities/entities';
+import { Exclude } from 'class-transformer';
+import { EntityAutoDateAndId } from 'src/common/entities/entities';
 import { Column, Entity } from 'typeorm';
 
 @Entity('user')
@@ -21,6 +22,7 @@ export class User extends EntityAutoDateAndId {
   })
   username: string;
 
+  @Exclude()
   @Column({
     name: 'cognito_id',
     type: 'uuid',
@@ -29,6 +31,7 @@ export class User extends EntityAutoDateAndId {
   })
   cognitoId: string;
 
+  // @Exclude()
   @Column({
     name: 'confirmed',
     type: 'boolean',
