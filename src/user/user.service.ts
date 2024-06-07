@@ -60,6 +60,15 @@ export class UserService {
     }
   }
 
+  public async getUser(cognitoId: string) {
+    const user = await this.userRepository.findOne({ where: { cognitoId } });
+    if (!user) {
+      throw new NotFoundException(`User not found`);
+    }
+
+    return classToPlain(user);
+  }
+
   public async getUserByEmail(email: string) {
     const user = await this.userRepository.findOne({ where: { email } });
     if (!user) {

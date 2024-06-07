@@ -31,7 +31,6 @@ export class User extends EntityAutoDateAndId {
   })
   cognitoId: string;
 
-  // @Exclude()
   @Column({
     name: 'confirmed',
     type: 'boolean',

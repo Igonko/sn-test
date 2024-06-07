@@ -13,24 +13,26 @@ export class AuthController {
 
   @Post('confirm')
   async confirm(@Body() confirmAuthDto: ConfirmAuthDto) {
-    return this.authService.confirm(confirmAuthDto);
+    return await this.authService.confirm(confirmAuthDto);
   }
 
   @Post('forgot-password')
   async forgotPassword(@Body() { email }: { email: string }) {
-    return this.authService.forgotPassword(email);
+    return await this.authService.forgotPassword(email);
   }
 
   @Post('confirm-forgot-password')
   async confirmForgotPassword(
     @Body() confirmForgotPasswordDto: ConfirmForgotPasswordDto,
   ) {
-    return this.authService.confirmForgotPassword(confirmForgotPasswordDto);
+    return await this.authService.confirmForgotPassword(
+      confirmForgotPasswordDto,
+    );
   }
 
   @Post('change-password')
   async changePassword(@Body() changePassword: ChangePasswordDto) {
-    return this.authService.changePassword(changePassword);
+    return await this.authService.changePassword(changePassword);
   }
 
   @Post('sign-in')

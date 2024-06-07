@@ -40,7 +40,6 @@ export class AuthService {
   public async signIn(signInAuthDto: SignInAuthDto) {
     const user = await this.userService.getUserByEmail(signInAuthDto.email);
     const { confirmed, ...userData } = user;
-
     if (!confirmed) {
       return await this.awsCognitoService.resendConfirmationCode(
         signInAuthDto.email,
