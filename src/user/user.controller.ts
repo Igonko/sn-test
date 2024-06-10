@@ -1,7 +1,9 @@
-import { Controller, Post, Body, Get, UseGuards, Req } from '@nestjs/common';
+import { Controller, Post, Body, Get, UseGuards } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
-import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import { CurrentUserDto } from './dto/current-user.dto';
+import { CognitoJwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 
 @Controller('user')
 export class UserController {
@@ -13,20 +15,8 @@ export class UserController {
   }
 
   @Get('profile')
-  @UseGuards(JwtAuthGuard)
-  async getProfile(@Req() request) {
-    const user = request.user;
-
-    [
-      { Name: 'email', Value: 'dagina9156@kernuo.com' },
-      { Name: 'email_verified', Value: 'true' },
-      { Name: 'sub', Value: 'c3b45882-1091-70d7-9331-2f47a' },
-    ];
-
-    const cognitoId = user.UserAttributes.find(
-      (item) => item.Name === 'sub',
-    )?.Value;
-
-    return await this.userService.getUser(cognitoId);
+  @UseGuards(CognitoJwtAuthGuard)
+  async getProfile(@CurrentUser() user: CurrentUserDto) {
+    return user;
   }
 }

@@ -5,11 +5,24 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AwsModule } from 'src/aws/aws.module';
+import { PassportModule } from '@nestjs/passport';
+import { AwsCognitoConfigService } from 'src/aws/aws-cognito-config.service';
+import { CognitoJwtStrategy } from 'src/auth/strategies/aws-cognito-jwt.strategy';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User]), ConfigModule, AwsModule],
+  imports: [
+    TypeOrmModule.forFeature([User]),
+    ConfigModule,
+    AwsModule,
+    PassportModule.register({ defaultStrategy: 'cognitoJwtStrategy' }),
+  ],
   controllers: [UserController],
-  providers: [UserService, ConfigService],
+  providers: [
+    UserService,
+    ConfigService,
+    AwsCognitoConfigService,
+    CognitoJwtStrategy,
+  ],
   exports: [UserService],
 })
 export class UserModule {}
