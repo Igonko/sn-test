@@ -33,7 +33,7 @@ export class UserController {
   @ApiBearerAuth('JWT')
   @ApiSecurity('JWT')
   @UseGuards(CognitoJwtAuthGuard)
-  async getProfile(@CurrentUser() user: CurrentUserDto) {
+  async getUser(@CurrentUser() user: CurrentUserDto) {
     return user;
   }
 }
