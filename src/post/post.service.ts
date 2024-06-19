@@ -8,6 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Post } from './entities/post.entity';
 import { UpdatePostDto } from './dto/update-post.dto';
+import { MessageDto } from 'src/common/dtos/message.dto';
 
 @Injectable()
 export class PostService {
@@ -15,11 +16,14 @@ export class PostService {
     @InjectRepository(Post) private readonly postRepository: Repository<Post>,
   ) {}
 
-  public async create(createPostDto: CreatePostDto) {
+  public async create(createPostDto: CreatePostDto, userId: number) {
     try {
-      await this.postRepository.save(createPostDto);
+      const post = await this.postRepository.save({
+        ...createPostDto,
+        user: { id: userId },
+      });
 
-      return 'Post created';
+      return post;
     } catch (error) {
       throw error;
     }
@@ -49,60 +53,80 @@ export class PostService {
     }
   }
 
-  public async getMyPosts(user_id: number) {
+  public async getMyPosts(userId: number) {
     try {
-      return await this.postRepository.find({ where: { user_id } });
+      return await this.postRepository.find({
+        where: { user: { id: userId } },
+        relations: ['user'],
+      });
     } catch (error) {
       throw error;
     }
   }
 
-  public async updatePost(updatePostDto: UpdatePostDto) {
+  public async updatePost(
+    updatePostDto: UpdatePostDto,
+    userId: number,
+    id: number,
+  ) {
     try {
-      const post = await this.postRepository.findOne({
-        where: { id: updatePostDto.id },
-      });
+      const post = await this.getPostById(id);
 
       if (!post) {
         throw new NotFoundException('Post not found');
       }
 
-      if (post.user_id !== updatePostDto.user_id) {
+      if (post.user?.id !== userId) {
         throw new ForbiddenException(
           'You are not authorized to update this post',
         );
       }
 
-      Object.assign(post, updatePostDto);
+      const preparedPost = { ...post, user: { id: post.user.id } };
 
-      await this.postRepository.update(updatePostDto.id, updatePostDto);
+      const data = Object.assign(preparedPost, updatePostDto);
 
-      return `Post with id ${updatePostDto.id} updated successfully`;
+      await this.postRepository.update(id, data);
+
+      return data;
     } catch (error) {
       throw error;
     }
   }
 
-  public async deletePost({ id, user_id }: { id: number; user_id: number }) {
+  public async deletePost({
+    id,
+    userId,
+  }: {
+    id: number;
+    userId: number;
+  }): Promise<MessageDto> {
     try {
-      const post = await this.postRepository.findOne({
-        where: { id },
-      });
+      const post = await this.getPostById(id);
 
       if (!post) {
         throw new NotFoundException('Post not found');
       }
 
-      if (post.user_id !== user_id) {
+      if (post.user?.id !== userId) {
         throw new ForbiddenException(
           'You are not authorized to delete this post',
         );
       }
 
       await this.postRepository.delete(id);
-      return `Post with id ${id} deleted successfully`;
+      return {
+        message: `Post with id ${id} deleted successfully`,
+      };
     } catch (error) {
       throw error;
     }
+  }
+
+  private async getPostById(id: number): Promise<Post> {
+    return await this.postRepository.findOne({
+      where: { id },
+      relations: ['user'],
+    });
   }
 }

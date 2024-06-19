@@ -38,10 +38,7 @@ export class PostController {
     @Body() createPostDto: CreatePostDto,
     @CurrentUser() user: CurrentUserDto,
   ) {
-    return await this.postService.create({
-      ...createPostDto,
-      user_id: user.id,
-    });
+    return await this.postService.create(createPostDto, user.id);
   }
 
   @Get()
@@ -87,11 +84,7 @@ export class PostController {
     @Body() updatePostDto: UpdatePostDto,
     @CurrentUser() user: CurrentUserDto,
   ) {
-    return await this.postService.updatePost({
-      ...updatePostDto,
-      user_id: user.id,
-      id: +id,
-    });
+    return await this.postService.updatePost(updatePostDto, user.id, +id);
   }
 
   @Delete(':id')
@@ -99,7 +92,6 @@ export class PostController {
   @ApiResponse({
     status: 200,
     description: 'Delete post by id',
-    type: GetPostDto,
   })
   @ApiBearerAuth('JWT')
   @ApiSecurity('JWT')
@@ -108,7 +100,7 @@ export class PostController {
     @Param('id') id: string,
     @CurrentUser() user: CurrentUserDto,
   ) {
-    return await this.postService.deletePost({ id: +id, user_id: user.id });
+    return await this.postService.deletePost({ id: +id, userId: user.id });
   }
 
   @Get(':id')

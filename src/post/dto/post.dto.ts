@@ -7,9 +7,6 @@ export class CreatePostDto {
     message: "Post can't be longer than 1024 characters",
   })
   post: string;
-
-  @ApiProperty()
-  user_id: number;
 }
 
 export class GetPostDto {

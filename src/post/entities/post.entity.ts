@@ -12,11 +12,7 @@ export class Post extends EntityAutoDateAndId {
   })
   post: string;
 
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, ({ id }) => id)
   @JoinColumn({ name: 'user_id' })
-  @Column({
-    name: 'user_id',
-    type: 'integer',
-  })
-  user_id: number;
+  user: User;
 }

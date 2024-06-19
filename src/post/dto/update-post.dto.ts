@@ -9,6 +9,4 @@ export class UpdatePostDto extends PartialType(CreatePostDto) {
     message: "Post can't be longer than 1024 characters",
   })
   post: string;
-
-  id: number;
 }
