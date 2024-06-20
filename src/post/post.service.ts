@@ -31,7 +31,23 @@ export class PostService {
 
   public async getAllPosts() {
     try {
-      return await this.postRepository.find();
+      const posts = await this.postRepository.find({
+        relations: ['user', 'like', 'comment'],
+      });
+
+      if (!posts.length) {
+        throw new NotFoundException('No posts found');
+      }
+
+      const updatedPosts = posts.map((post) => ({
+        ...post,
+        user: post.user.id,
+        like: post.like.map((item) => ({
+          id: item.id,
+        })),
+      }));
+
+      return updatedPosts;
     } catch (error) {
       throw error;
     }
@@ -55,10 +71,24 @@ export class PostService {
 
   public async getMyPosts(userId: number) {
     try {
-      return await this.postRepository.find({
+      const posts = await this.postRepository.find({
         where: { user: { id: userId } },
-        relations: ['user'],
+        relations: ['user', 'like', 'comment'],
       });
+
+      if (!posts.length) {
+        throw new NotFoundException('No posts found');
+      }
+
+      const updatedPosts = posts.map((post) => ({
+        ...post,
+        user: post.user.id,
+        like: post.like.map((item) => ({
+          id: item.id,
+        })),
+      }));
+
+      return updatedPosts;
     } catch (error) {
       throw error;
     }

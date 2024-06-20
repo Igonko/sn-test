@@ -3,14 +3,22 @@ import {
   Get,
   Post,
   Body,
-  Patch,
   Param,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiSecurity,
+  ApiTags,
+} from '@nestjs/swagger';
 import { LikeService } from './like.service';
-import { CreateLikeDto } from './dto/create-like.dto';
-import { UpdateLikeDto } from './dto/update-like.dto';
-import { ApiTags } from '@nestjs/swagger';
+import { CreateCommentLikeDto, CreatePostLikeDto } from './dto/create-like.dto';
+import { CognitoJwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import { CurrentUserDto } from 'src/user/dto/current-user.dto';
 
 @ApiTags('Like')
 @Controller('like')
@@ -18,8 +26,31 @@ export class LikeController {
   constructor(private readonly likeService: LikeService) {}
 
   @Post()
-  create(@Body() createLikeDto: CreateLikeDto) {
-    return this.likeService.create(createLikeDto);
+  @ApiOperation({ summary: 'Create like' })
+  @ApiResponse({ status: 201, description: 'Like created.' })
+  @ApiBearerAuth('JWT')
+  @ApiSecurity('JWT')
+  @UseGuards(CognitoJwtAuthGuard)
+  create(
+    @Body() createLikeDto: CreatePostLikeDto,
+    @CurrentUser() user: CurrentUserDto,
+  ) {
+    const { postId } = createLikeDto;
+    return this.likeService.create(postId, user.id);
+  }
+
+  @Post('comment')
+  @ApiOperation({ summary: 'Create like' })
+  @ApiResponse({ status: 201, description: 'Like created.' })
+  @ApiBearerAuth('JWT')
+  @ApiSecurity('JWT')
+  @UseGuards(CognitoJwtAuthGuard)
+  createComment(
+    @Body() createLikeDto: CreateCommentLikeDto,
+    @CurrentUser() user: CurrentUserDto,
+  ) {
+    const { commentId } = createLikeDto;
+    return this.likeService.createComment(commentId, user.id);
   }
 
   @Get()
@@ -27,18 +58,8 @@ export class LikeController {
     return this.likeService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.likeService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateLikeDto: UpdateLikeDto) {
-    return this.likeService.update(+id, updateLikeDto);
-  }
-
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.likeService.remove(+id);
+    return this.likeService.remove(id);
   }
 }

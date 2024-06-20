@@ -1,6 +1,8 @@
+import { Comment } from 'src/comment/entities/comment.entity';
+import { Like } from './../../like/entities/like.entity';
 import { EntityAutoDateAndId } from 'src/common/entities/entities';
 import { User } from 'src/user/entities/user.entity';
-import { Column, Entity, ManyToOne, JoinColumn } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 
 @Entity('post')
 export class Post extends EntityAutoDateAndId {
@@ -12,7 +14,13 @@ export class Post extends EntityAutoDateAndId {
   })
   post: string;
 
-  @ManyToOne(() => User, ({ id }) => id)
+  @ManyToOne(() => User, (user) => user.id)
   @JoinColumn({ name: 'user_id' })
   user: User;
+
+  @OneToMany(() => Like, (like) => like.post)
+  like: Like[];
+
+  @OneToMany(() => Comment, (comment) => comment.post)
+  comment: Comment[];
 }
