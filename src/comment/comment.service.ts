@@ -34,7 +34,7 @@ export class CommentService {
   public async findAll() {
     try {
       const comments = await this.commentRepository.find({
-        relations: ['user', 'post'],
+        relations: ['user', 'post', 'like'],
       });
 
       if (!comments.length) {
@@ -53,7 +53,7 @@ export class CommentService {
     try {
       const comment = await this.commentRepository.findOne({
         where: { id: +id },
-        relations: ['user', 'post'],
+        relations: ['user', 'post', 'like'],
       });
 
       if (!comment) {
@@ -72,7 +72,7 @@ export class CommentService {
     try {
       const neededComment = await this.commentRepository.findOne({
         where: { id: +id },
-        relations: ['user', 'post'],
+        relations: ['user', 'post', 'like'],
       });
 
       if (!neededComment) {
@@ -130,7 +130,8 @@ export class CommentService {
         createdAt: comment.createdAt,
         updatedAt: comment.updatedAt,
         userId: comment.user.id,
-        postId: comment.post.id,
+        postId: comment.post.id || null,
+        likeId: comment?.like?.map((item) => item.id) || null,
       }));
     }
 
@@ -140,7 +141,8 @@ export class CommentService {
       createdAt: comments.createdAt,
       updatedAt: comments.updatedAt,
       userId: comments.user.id,
-      postId: comments.post.id,
+      postId: comments.post.id || null,
+      likeId: comments?.like?.map((item) => item.id) || null,
     };
   }
 }

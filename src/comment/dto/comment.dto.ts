@@ -13,6 +13,9 @@ export class CommentDto {
   @ApiProperty()
   postId: number;
 
+  @ApiProperty({ type: [Number] })
+  likeId: [number];
+
   @ApiProperty()
   createdAt: Date;
 
