@@ -1,6 +1,5 @@
 import {
   Controller,
-  Get,
   Post,
   Body,
   Param,
@@ -51,11 +50,6 @@ export class LikeController {
   ) {
     const { commentId } = createLikeDto;
     return this.likeService.createComment(commentId, user.id);
-  }
-
-  @Get()
-  findAll() {
-    return this.likeService.findAll();
   }
 
   @Delete(':id')

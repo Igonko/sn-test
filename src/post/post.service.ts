@@ -3,18 +3,28 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { CreatePostDto } from './dto/post.dto';
+import { CreatePostDto, PostBodyDto } from './dto/post.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Post } from './entities/post.entity';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { MessageDto } from 'src/common/dtos/message.dto';
+import { Comment } from 'src/comment/entities/comment.entity';
 
 @Injectable()
 export class PostService {
   constructor(
     @InjectRepository(Post) private readonly postRepository: Repository<Post>,
+    @InjectRepository(Comment)
+    private readonly commentRepository: Repository<Comment>,
   ) {}
+
+  private async getPostById(id: number): Promise<Post> {
+    return await this.postRepository.findOne({
+      where: { id },
+      relations: ['user'],
+    });
+  }
 
   public async create(createPostDto: CreatePostDto, userId: number) {
     try {
@@ -23,29 +33,66 @@ export class PostService {
         user: { id: userId },
       });
 
-      return post;
+      return await this.getPost(post.id);
     } catch (error) {
       throw error;
     }
   }
 
-  public async getAllPosts() {
+  public async getAllPosts({ skip = 0, take = 50 }: PostBodyDto) {
+    console.log('skip', skip);
+    console.log('take', take);
     try {
-      const posts = await this.postRepository.find({
-        relations: ['user', 'like', 'comment'],
+      const posts = await this.postRepository
+        .createQueryBuilder('post')
+        .leftJoinAndSelect('post.user', 'user')
+        .loadRelationCountAndMap('post.likesCount', 'post.like')
+        .loadRelationCountAndMap('post.commentsCount', 'post.comment')
+        .select(['post', 'user.id', 'user.email', 'user.username'])
+        .skip(skip || 0)
+        .take(take || 50)
+        .limit(100)
+        .getMany();
+
+      const comments = await Promise.all(
+        posts.map(({ id }) =>
+          this.commentRepository
+            .createQueryBuilder('comment')
+            .leftJoinAndSelect('comment.user', 'user')
+            .orderBy('comment.createdAt', 'DESC')
+            .leftJoin('comment.post', 'post')
+            .skip(0)
+            .take(5)
+            .loadRelationCountAndMap('comment.likeCount', 'comment.like')
+            .select([
+              'comment',
+              'user.id',
+              'user.email',
+              'user.username',
+              'post.id',
+            ])
+            .where('post.id = :id', { id })
+            .getMany(),
+        ),
+      );
+
+      const updatedPosts = posts.map((post) => {
+        if (comments.some((comment) => comment?.[0]?.post.id === post.id)) {
+          return {
+            ...post,
+            comments: comments.find((item) => item?.[0]?.post.id === post.id),
+          };
+        } else {
+          return {
+            ...post,
+            comments: null,
+          };
+        }
       });
 
-      if (!posts.length) {
+      if (!updatedPosts.length) {
         throw new NotFoundException('No posts found');
       }
-
-      const updatedPosts = posts.map((post) => ({
-        ...post,
-        user: post.user.id,
-        like: post.like.map((item) => ({
-          id: item.id,
-        })),
-      }));
 
       return updatedPosts;
     } catch (error) {
@@ -55,40 +102,38 @@ export class PostService {
 
   public async getPost(id: number) {
     try {
-      const post = await this.postRepository.findOne({
-        where: { id },
-      });
+      const post = await this.postRepository
+        .createQueryBuilder('post')
+        .leftJoinAndSelect('post.user', 'user')
+        .loadRelationCountAndMap('post.likesCount', 'post.like')
+        .loadRelationCountAndMap('post.commentsCount', 'post.comment')
+        .select(['post', 'user.id', 'user.email', 'user.username'])
+        .where('post.id = :id', { id })
+        .getOne();
+
+      const comments = await this.commentRepository
+        .createQueryBuilder('comment')
+        .leftJoinAndSelect('comment.user', 'user')
+        .orderBy('comment.createdAt', 'DESC')
+        .leftJoin('comment.post', 'post')
+        .skip(0)
+        .take(5)
+        .loadRelationCountAndMap('comment.likeCount', 'comment.like')
+        .select([
+          'comment',
+          'user.id',
+          'user.email',
+          'user.username',
+          'post.id',
+        ])
+        .where('post.id = :id', { id })
+        .getMany();
 
       if (!post) {
         throw new NotFoundException('Post not found');
       }
 
-      return post;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  public async getMyPosts(userId: number) {
-    try {
-      const posts = await this.postRepository.find({
-        where: { user: { id: userId } },
-        relations: ['user', 'like', 'comment'],
-      });
-
-      if (!posts.length) {
-        throw new NotFoundException('No posts found');
-      }
-
-      const updatedPosts = posts.map((post) => ({
-        ...post,
-        user: post.user.id,
-        like: post.like.map((item) => ({
-          id: item.id,
-        })),
-      }));
-
-      return updatedPosts;
+      return { ...post, comments };
     } catch (error) {
       throw error;
     }
@@ -100,7 +145,7 @@ export class PostService {
     id: number,
   ) {
     try {
-      const post = await this.getPostById(id);
+      const post = await this.getPost(id);
 
       if (!post) {
         throw new NotFoundException('Post not found');
@@ -112,13 +157,9 @@ export class PostService {
         );
       }
 
-      const preparedPost = { ...post, user: { id: post.user.id } };
+      await this.postRepository.update(id, updatePostDto);
 
-      const data = Object.assign(preparedPost, updatePostDto);
-
-      await this.postRepository.update(id, data);
-
-      return data;
+      return await this.getPost(id);
     } catch (error) {
       throw error;
     }
@@ -151,12 +192,5 @@ export class PostService {
     } catch (error) {
       throw error;
     }
-  }
-
-  private async getPostById(id: number): Promise<Post> {
-    return await this.postRepository.findOne({
-      where: { id },
-      relations: ['user'],
-    });
   }
 }

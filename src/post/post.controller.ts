@@ -9,7 +9,7 @@ import {
   Delete,
 } from '@nestjs/common';
 import { PostService } from './post.service';
-import { CreatePostDto, GetPostDto } from './dto/post.dto';
+import { CreatePostDto, GetPostDto, PostBodyDto } from './dto/post.dto';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -50,23 +50,10 @@ export class PostController {
   })
   @ApiBearerAuth('JWT')
   @ApiSecurity('JWT')
+  @ApiBody({ type: PostBodyDto })
   @UseGuards(CognitoJwtAuthGuard)
-  async getAllPosts() {
-    return await this.postService.getAllPosts();
-  }
-
-  @Get('user')
-  @ApiOperation({ summary: 'Get my posts' })
-  @ApiResponse({
-    status: 201,
-    description: 'Get my posts',
-    type: [GetPostDto],
-  })
-  @ApiBearerAuth('JWT')
-  @ApiSecurity('JWT')
-  @UseGuards(CognitoJwtAuthGuard)
-  async getMyPosts(@CurrentUser() user: CurrentUserDto) {
-    return await this.postService.getMyPosts(user.id);
+  async getAllPosts(@Body() postBodyDto: PostBodyDto) {
+    return await this.postService.getAllPosts(postBodyDto);
   }
 
   @Patch(':id')

@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { User } from 'src/user/entities/user.entity';
 
 export class CommentDto {
   @ApiProperty()
@@ -8,13 +9,13 @@ export class CommentDto {
   comment: string;
 
   @ApiProperty()
-  userId: number;
+  user: User;
 
   @ApiProperty()
   postId: number;
 
-  @ApiProperty({ type: [Number] })
-  likeId: [number];
+  @ApiProperty()
+  likeCount: number;
 
   @ApiProperty()
   createdAt: Date;

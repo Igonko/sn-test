@@ -33,9 +33,12 @@ export class CommentService {
 
   public async findAll() {
     try {
-      const comments = await this.commentRepository.find({
-        relations: ['user', 'post', 'like'],
-      });
+      const comments = await this.commentRepository
+        .createQueryBuilder('comment')
+        .leftJoinAndSelect('comment.user', 'user')
+        .leftJoinAndSelect('comment.post', 'post')
+        .loadRelationCountAndMap('comment.likeCount', 'comment.like')
+        .getMany();
 
       if (!comments.length) {
         throw new NotFoundException('There are no comments yet');
@@ -51,18 +54,15 @@ export class CommentService {
 
   public async findOne(id: string) {
     try {
-      const comment = await this.commentRepository.findOne({
-        where: { id: +id },
-        relations: ['user', 'post', 'like'],
-      });
+      const comment = await this.commentRepository
+        .createQueryBuilder('comment')
+        .leftJoinAndSelect('comment.user', 'user')
+        .leftJoinAndSelect('comment.post', 'post')
+        .loadRelationCountAndMap('comment.likeCount', 'comment.like')
+        .where('comment.id = :id', { id: +id })
+        .getOne();
 
-      if (!comment) {
-        throw new NotFoundException('There are no comments yet');
-      }
-
-      const updatedComment = this.formatComments(comment);
-
-      return updatedComment;
+      return this.formatComments(comment);
     } catch (error) {
       throw error;
     }
@@ -70,10 +70,13 @@ export class CommentService {
 
   public async update(id: string, userId: number, comment: string) {
     try {
-      const neededComment = await this.commentRepository.findOne({
-        where: { id: +id },
-        relations: ['user', 'post', 'like'],
-      });
+      const neededComment = await this.commentRepository
+        .createQueryBuilder('comment')
+        .leftJoinAndSelect('comment.user', 'user')
+        .leftJoinAndSelect('comment.post', 'post')
+        .loadRelationCountAndMap('comment.likeCount', 'comment.like')
+        .where('comment.id = :id', { id: +id })
+        .getOne();
 
       if (!neededComment) {
         throw new NotFoundException('Comment not found');
@@ -125,24 +128,32 @@ export class CommentService {
   private formatComments(comments: Comment[] | Comment) {
     if (Array.isArray(comments)) {
       return comments.map((comment) => ({
+        ...comment,
         id: comment.id,
         comment: comment.comment,
         createdAt: comment.createdAt,
         updatedAt: comment.updatedAt,
-        userId: comment.user.id,
-        postId: comment.post.id || null,
-        likeId: comment?.like?.map((item) => item.id) || null,
+        post: comment.post.id,
+        user: {
+          id: comment.user.id,
+          userName: comment.user.username,
+          userEmail: comment.user.email,
+        },
       }));
     }
 
     return {
+      ...comments,
       id: comments.id,
       comment: comments.comment,
       createdAt: comments.createdAt,
       updatedAt: comments.updatedAt,
-      userId: comments.user.id,
-      postId: comments.post.id || null,
-      likeId: comments?.like?.map((item) => item.id) || null,
+      post: comments.post.id,
+      user: {
+        id: comments.user.id,
+        userName: comments.user.username,
+        userEmail: comments.user.email,
+      },
     };
   }
 }

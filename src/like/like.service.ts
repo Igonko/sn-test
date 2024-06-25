@@ -16,12 +16,12 @@ export class LikeService {
   ): Promise<Like> {
     const like = comment
       ? await this.likeRepository.findOne({
-          where: [{ comment: { id: resourceId } }, { user: { id: userId } }],
-          relations: ['user', 'post', 'comment'],
+          where: { comment: { id: resourceId }, user: { id: userId } },
+          relations: ['user', 'comment'],
         })
       : await this.likeRepository.findOne({
-          where: [{ post: { id: resourceId } }, { user: { id: userId } }],
-          relations: ['user', 'post', 'comment'],
+          where: { post: { id: resourceId }, user: { id: userId } },
+          relations: ['user', 'post'],
         });
 
     return like;
@@ -49,21 +49,24 @@ export class LikeService {
     if (like?.comment?.id === commentId && like?.user?.id === userId) {
       await this.remove(like.id);
       return {
-        message: 'Like was removed from the post',
+        message: 'Like was removed from the comment',
       };
     }
 
-    return this.likeRepository.save({
+    return await this.likeRepository.save({
       comment: { id: commentId },
       user: { id: userId },
     });
   }
 
-  findAll() {
-    return `This action returns all like`;
-  }
-
   public async remove(id: string | number) {
-    return await this.likeRepository.delete(id);
+    try {
+      await this.likeRepository.delete(id);
+      return {
+        message: 'Like deleted successfully',
+      };
+    } catch (error) {
+      return error;
+    }
   }
 }

@@ -17,11 +17,19 @@ export class GetPostDto {
   post: string;
 
   @ApiProperty()
-  user_id: number;
+  userId: number;
 
   @ApiProperty()
   updatedAt: Date;
 
   @ApiProperty()
   createdAt: Date;
+}
+
+export class PostBodyDto {
+  @ApiProperty()
+  skip: number;
+
+  @ApiProperty()
+  take: number;
 }
