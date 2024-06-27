@@ -42,7 +42,7 @@ export class User extends EntityAutoDateAndId {
   @OneToOne(() => DbFile, {
     nullable: true,
   })
-  @JoinColumn({ name: 'avatar' })
+  @JoinColumn({ name: 'avatar_id' })
   avatar?: DbFile;
 
   @Column({ name: 'avatar_id', type: 'integer', nullable: true })

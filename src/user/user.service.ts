@@ -121,6 +121,12 @@ export class UserService {
       throw new NotFoundException(`User not found`);
     }
 
+    if (user.avatar) {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      //@ts-expect-error
+      user.avatar.data = Buffer.from(user.avatar.data).toString('base64');
+    }
+
     return classToPlain(user);
   }
 
