@@ -1,4 +1,12 @@
-import { Controller, Post, Body, Get, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  UseGuards,
+  UseInterceptors,
+  UploadedFile,
+} from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
@@ -11,6 +19,9 @@ import {
   ApiSecurity,
   ApiTags,
 } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { Express } from 'express';
+import 'multer';
 
 @ApiTags('User')
 @Controller('user')
@@ -25,6 +36,18 @@ export class UserController {
   })
   create(@Body() createUserDto: CreateUserDto) {
     return this.userService.create(createUserDto);
+  }
+
+  @Post('avatar')
+  @ApiBearerAuth('JWT')
+  @ApiSecurity('JWT')
+  @UseGuards(CognitoJwtAuthGuard)
+  @UseInterceptors(FileInterceptor('file'))
+  async addAvatar(
+    @CurrentUser() user: CurrentUserDto,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.userService.addAvatar(user.id, file.buffer, file.originalname);
   }
 
   @Get()

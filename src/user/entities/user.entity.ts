@@ -1,6 +1,7 @@
 import { Exclude } from 'class-transformer';
 import { EntityAutoDateAndId } from 'src/common/entities/entities';
-import { Column, Entity } from 'typeorm';
+import DbFile from 'src/dbFile/enteties/file.entity';
+import { Column, Entity, JoinColumn, OneToOne } from 'typeorm';
 
 @Entity('user')
 export class User extends EntityAutoDateAndId {
@@ -37,4 +38,13 @@ export class User extends EntityAutoDateAndId {
     default: false,
   })
   confirmed: boolean;
+
+  @OneToOne(() => DbFile, {
+    nullable: true,
+  })
+  @JoinColumn({ name: 'avatar' })
+  avatar?: DbFile;
+
+  @Column({ name: 'avatar_id', type: 'integer', nullable: true })
+  avatarId?: number;
 }

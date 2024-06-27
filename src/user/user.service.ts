@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Inject,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
   forwardRef,
 } from '@nestjs/common';
@@ -9,8 +10,9 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { AwsCognitoService } from '../aws/aws-cognito.service';
-import { Repository } from 'typeorm';
+import { Connection, Repository } from 'typeorm';
 import { classToPlain } from 'class-transformer';
+import { DbFileService } from 'src/dbFile/file.service';
 
 @Injectable()
 export class UserService {
@@ -18,6 +20,9 @@ export class UserService {
     @InjectRepository(User) private readonly userRepository: Repository<User>,
     @Inject(forwardRef(() => AwsCognitoService))
     private readonly awsCognitoService: AwsCognitoService,
+    @Inject(forwardRef(() => DbFileService))
+    private readonly dbFileService: DbFileService,
+    private connection: Connection,
   ) {}
 
   private async existUser(createUserDto: CreateUserDto) {
@@ -36,6 +41,52 @@ export class UserService {
       throw new BadRequestException(
         'User with this email/username already exists',
       );
+  }
+
+  public async addAvatar(
+    userId: number,
+    imageBuffer: Buffer,
+    filename: string,
+  ) {
+    const queryRunner = this.connection.createQueryRunner();
+
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const user = await queryRunner.manager.findOne(User, {
+        where: { id: userId },
+      });
+      const currentAvatarId = user.avatarId;
+      const avatar = await this.dbFileService.uploadDatabaseFileWithQueryRunner(
+        imageBuffer,
+        filename,
+        queryRunner,
+      );
+
+      await queryRunner.manager.update(User, userId, {
+        avatarId: avatar.id,
+      });
+
+      if (currentAvatarId) {
+        await this.dbFileService.deleteFileWithQueryRunner(
+          currentAvatarId,
+          queryRunner,
+        );
+      }
+
+      await queryRunner.commitTransaction();
+
+      return {
+        filename: avatar.filename,
+        id: avatar.id,
+      };
+    } catch {
+      await queryRunner.rollbackTransaction();
+      throw new InternalServerErrorException();
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   public async create(createUserDto: CreateUserDto) {
@@ -61,7 +112,11 @@ export class UserService {
   }
 
   public async getUser(cognitoId: string) {
-    const user = await this.userRepository.findOne({ where: { cognitoId } });
+    const user = await this.userRepository.findOne({
+      where: { cognitoId },
+      relations: ['avatar'],
+    });
+
     if (!user) {
       throw new NotFoundException(`User not found`);
     }
