@@ -55,4 +55,7 @@ export class User extends EntityAutoDateAndId {
   })
   @JoinColumn({ name: 'customer_id' })
   customer?: Customer;
+
+  @Column({ name: 'posts_checked', type: 'int', default: 0 })
+  postsChecked: number;
 }

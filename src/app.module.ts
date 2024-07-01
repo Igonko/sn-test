@@ -35,7 +35,7 @@ import { StripeModule } from './stripe/stripe.module';
           entities: [__dirname + '/**/*.entity{.ts,.js}'],
           migrationsRun: true,
           synchronize: true,
-          logging: true,
+          // logging: true,
         };
       },
       inject: [ConfigService],

@@ -28,6 +28,9 @@ export class Customer extends EntityAutoDateAndId {
   @Column({ name: 'delinquent', default: false })
   delinquent: boolean;
 
+  @Column({ name: 'subscription', nullable: true })
+  subscription: string;
+
   @OneToOne(() => User, ({ customer }) => customer)
   @Exclude()
   user: User;

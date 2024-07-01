@@ -73,6 +73,19 @@ export class StripeService {
       items: [{ price: priceId }],
       expand: ['latest_invoice.payment_intent'],
     });
+
+    const customer = await this.customerRepository.findOne({
+      where: { customerId },
+    });
+
+    if (!customer) {
+      throw new NotFoundException('Customer not found');
+    }
+
+    customer.subscription = subscription.id;
+
+    await this.customerRepository.save(customer);
+
     return subscription;
   }
 
@@ -84,6 +97,13 @@ export class StripeService {
 
   public async cancelSubscription(subscriptionId: string) {
     const cancellation = await this.stripe.subscriptions.cancel(subscriptionId);
+    const customer = await this.customerRepository.findOne({
+      where: { subscription: subscriptionId },
+    });
+
+    customer.subscription = null;
+    await this.customerRepository.save(customer);
+
     return cancellation;
   }
 }

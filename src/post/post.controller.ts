@@ -22,6 +22,7 @@ import { CognitoJwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { CurrentUserDto } from 'src/user/dto/current-user.dto';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { UpdatePostDto } from './dto/update-post.dto';
+import { User } from 'src/user/entities/user.entity';
 
 @ApiTags('Post')
 @Controller('post')
@@ -52,8 +53,11 @@ export class PostController {
   @ApiSecurity('JWT')
   @ApiBody({ type: PostBodyDto })
   @UseGuards(CognitoJwtAuthGuard)
-  async getAllPosts(@Body() postBodyDto: PostBodyDto) {
-    return await this.postService.getAllPosts(postBodyDto);
+  async getAllPosts(
+    @Body() postBodyDto: PostBodyDto,
+    @CurrentUser() user: User,
+  ) {
+    return await this.postService.getAllPosts(postBodyDto, user);
   }
 
   @Patch(':id')
@@ -69,7 +73,7 @@ export class PostController {
   async updatePost(
     @Param('id') id: string,
     @Body() updatePostDto: UpdatePostDto,
-    @CurrentUser() user: CurrentUserDto,
+    @CurrentUser() user: User,
   ) {
     return await this.postService.updatePost(updatePostDto, user.id, +id);
   }
@@ -100,7 +104,7 @@ export class PostController {
   @ApiBearerAuth('JWT')
   @ApiSecurity('JWT')
   @UseGuards(CognitoJwtAuthGuard)
-  async getPost(@Param('id') id: string) {
-    return await this.postService.getPost(+id);
+  async getPost(@Param('id') id: string, @CurrentUser() user: User) {
+    return await this.postService.getPost(+id, user);
   }
 }

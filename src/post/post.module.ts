@@ -11,13 +11,16 @@ import { CognitoJwtStrategy } from 'src/auth/strategies/aws-cognito-jwt.strategy
 import { UserModule } from 'src/user/user.module';
 import { CommentModule } from 'src/comment/comment.module';
 import { Comment } from 'src/comment/entities/comment.entity';
+import { StripeModule } from 'src/stripe/stripe.module';
+import { User } from 'src/user/entities/user.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Post, Comment]),
+    TypeOrmModule.forFeature([Post, Comment, User]),
     ConfigModule,
     AwsModule,
     UserModule,
+    StripeModule,
     CommentModule,
     PassportModule.register({ defaultStrategy: 'cognitoJwtStrategy' }),
   ],

@@ -1,7 +1,9 @@
 import {
   ForbiddenException,
+  Inject,
   Injectable,
   NotFoundException,
+  forwardRef,
 } from '@nestjs/common';
 import { CreatePostDto, PostBodyDto } from './dto/post.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -10,13 +12,20 @@ import { Post } from './entities/post.entity';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { MessageDto } from 'src/common/dtos/message.dto';
 import { Comment } from 'src/comment/entities/comment.entity';
+import { User } from 'src/user/entities/user.entity';
+import { StripeService } from 'src/stripe/stripe.service';
 
 @Injectable()
 export class PostService {
   constructor(
-    @InjectRepository(Post) private readonly postRepository: Repository<Post>,
+    @InjectRepository(Post)
+    private readonly postRepository: Repository<Post>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
     @InjectRepository(Comment)
     private readonly commentRepository: Repository<Comment>,
+    @Inject(forwardRef(() => StripeService))
+    private readonly stripeService: StripeService,
   ) {}
 
   private async getPostById(id: number): Promise<Post> {
@@ -24,6 +33,27 @@ export class PostService {
       where: { id },
       relations: ['user'],
     });
+  }
+
+  private async checkPost(user: User) {
+    const userSubscriptionId = user.customer.subscription;
+    const subscription = userSubscriptionId
+      ? await this.stripeService.getSubscription(userSubscriptionId)
+      : null;
+
+    if (user.postsChecked >= 5) {
+      const isExpired =
+        new Date() >= new Date(subscription.current_period_end * 1000);
+
+      if (!subscription || isExpired) {
+        throw new ForbiddenException(
+          'You have reached your free post limit. Please subscribe to access more posts.',
+        );
+      }
+    }
+
+    user.postsChecked += 1;
+    await this.userRepository.save(user);
   }
 
   public async create(createPostDto: CreatePostDto, userId: number) {
@@ -39,7 +69,7 @@ export class PostService {
     }
   }
 
-  public async getAllPosts({ skip = 0, take = 50 }: PostBodyDto) {
+  public async getAllPosts({ skip = 0, take = 50 }: PostBodyDto, user: User) {
     try {
       const posts = await this.postRepository
         .createQueryBuilder('post')
@@ -48,7 +78,7 @@ export class PostService {
         .loadRelationCountAndMap('post.commentsCount', 'post.comment')
         .select(['post', 'user.id', 'user.email', 'user.username'])
         .skip(skip)
-        .take(take)
+        .take(user.customer.subscription ? take : 5)
         .limit(100)
         .getMany();
 
@@ -98,8 +128,12 @@ export class PostService {
     }
   }
 
-  public async getPost(id: number) {
+  public async getPost(id: number, user?: User) {
     try {
+      if (user) {
+        await this.checkPost(user);
+      }
+
       const post = await this.postRepository
         .createQueryBuilder('post')
         .leftJoinAndSelect('post.user', 'user')

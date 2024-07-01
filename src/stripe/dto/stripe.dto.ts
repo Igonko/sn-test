@@ -4,6 +4,5 @@ export class CreateCustomerDto {
 }
 
 export class CreateSubscriptionDto {
-  customerId: string;
   priceId: string;
 }
