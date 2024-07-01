@@ -1,6 +1,7 @@
 import { Exclude } from 'class-transformer';
 import { EntityAutoDateAndId } from 'src/common/entities/entities';
 import DbFile from 'src/dbFile/enteties/file.entity';
+import { Customer } from 'src/stripe/entities/customer.entity';
 import { Column, Entity, JoinColumn, OneToOne } from 'typeorm';
 
 @Entity('user')
@@ -47,4 +48,11 @@ export class User extends EntityAutoDateAndId {
 
   @Column({ name: 'avatar_id', type: 'integer', nullable: true })
   avatarId?: number;
+
+  @OneToOne(() => Customer, ({ user }) => user, {
+    nullable: true,
+    cascade: true,
+  })
+  @JoinColumn({ name: 'customer_id' })
+  customer?: Customer;
 }

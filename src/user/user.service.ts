@@ -114,7 +114,7 @@ export class UserService {
   public async getUser(cognitoId: string) {
     const user = await this.userRepository.findOne({
       where: { cognitoId },
-      relations: ['avatar'],
+      relations: ['avatar', 'customer'],
     });
 
     if (!user) {

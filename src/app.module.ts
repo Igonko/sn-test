@@ -10,6 +10,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
 import { DbFileModule } from './dbFile/file.module';
+import { StripeModule } from './stripe/stripe.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { DbFileModule } from './dbFile/file.module';
     LikeModule,
     PostModule,
     DbFileModule,
+    StripeModule,
     CommentModule,
     ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
     TypeOrmModule.forRootAsync({

@@ -40,8 +40,6 @@ export class PostService {
   }
 
   public async getAllPosts({ skip = 0, take = 50 }: PostBodyDto) {
-    console.log('skip', skip);
-    console.log('take', take);
     try {
       const posts = await this.postRepository
         .createQueryBuilder('post')
@@ -49,8 +47,8 @@ export class PostService {
         .loadRelationCountAndMap('post.likesCount', 'post.like')
         .loadRelationCountAndMap('post.commentsCount', 'post.comment')
         .select(['post', 'user.id', 'user.email', 'user.username'])
-        .skip(skip || 0)
-        .take(take || 50)
+        .skip(skip)
+        .take(take)
         .limit(100)
         .getMany();
 

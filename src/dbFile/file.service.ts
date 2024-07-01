@@ -13,6 +13,7 @@ export class DbFileService {
   public async getFileById(id: number) {
     try {
       const file = await this.dbFileRepository.findOne({ where: { id } });
+
       if (!file) {
         throw new NotFoundException();
       }
