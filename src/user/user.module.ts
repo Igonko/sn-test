@@ -8,14 +8,14 @@ import { AwsModule } from 'src/aws/aws.module';
 import { PassportModule } from '@nestjs/passport';
 import { AwsCognitoConfigService } from 'src/aws/aws-cognito-config.service';
 import { CognitoJwtStrategy } from 'src/auth/strategies/aws-cognito-jwt.strategy';
-import { DbFileModule } from 'src/dbFile/file.module';
+import { MinioModule } from 'src/minio/minio.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([User]),
     ConfigModule,
     AwsModule,
-    DbFileModule,
+    MinioModule,
     PassportModule.register({ defaultStrategy: 'cognitoJwtStrategy' }),
   ],
   controllers: [UserController],

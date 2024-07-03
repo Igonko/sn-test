@@ -9,8 +9,8 @@ import { CommentModule } from './comment/comment.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
-import { DbFileModule } from './dbFile/file.module';
 import { StripeModule } from './stripe/stripe.module';
+import { MinioModule } from './minio/minio.module';
 
 @Module({
   imports: [
@@ -18,9 +18,10 @@ import { StripeModule } from './stripe/stripe.module';
     ProfileModule,
     LikeModule,
     PostModule,
-    DbFileModule,
     StripeModule,
     CommentModule,
+    AuthModule,
+    MinioModule,
     ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
@@ -40,7 +41,6 @@ import { StripeModule } from './stripe/stripe.module';
       },
       inject: [ConfigService],
     }),
-    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

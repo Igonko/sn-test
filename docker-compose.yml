@@ -2,6 +2,7 @@ version: '3.8'
 
 volumes:
   pgdata:
+  minio-data:
 
 services:
   db:
@@ -32,3 +33,16 @@ services:
       - db
     volumes:
       - ./src:/app/src
+
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    restart: on-failure
+    env_file:
+      - '.env'
+    ports:
+      - '${MINIO_PORT}:${MINIO_PORT}'
+      - '${MINIO_PORT_UI}:${MINIO_PORT_UI}'
+    volumes:
+      - minio-data:/data
+    command: server /data --address ":${MINIO_PORT}" --console-address ":${MINIO_PORT_UI}"

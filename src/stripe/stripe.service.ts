@@ -12,7 +12,7 @@ export class StripeService {
   private stripe: Stripe;
 
   constructor(
-    private configService: ConfigService,
+    private readonly configService: ConfigService,
     @InjectRepository(Customer)
     private readonly customerRepository: Repository<Customer>,
     @InjectRepository(User)

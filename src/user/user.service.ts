@@ -2,7 +2,6 @@ import {
   BadRequestException,
   Inject,
   Injectable,
-  InternalServerErrorException,
   NotFoundException,
   forwardRef,
 } from '@nestjs/common';
@@ -10,9 +9,9 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { AwsCognitoService } from '../aws/aws-cognito.service';
-import { Connection, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { classToPlain } from 'class-transformer';
-import { DbFileService } from 'src/dbFile/file.service';
+import { MinioService } from 'src/minio/minio.service';
 
 @Injectable()
 export class UserService {
@@ -20,9 +19,8 @@ export class UserService {
     @InjectRepository(User) private readonly userRepository: Repository<User>,
     @Inject(forwardRef(() => AwsCognitoService))
     private readonly awsCognitoService: AwsCognitoService,
-    @Inject(forwardRef(() => DbFileService))
-    private readonly dbFileService: DbFileService,
-    private connection: Connection,
+    @Inject(forwardRef(() => MinioService))
+    private readonly minioService: MinioService,
   ) {}
 
   private async existUser(createUserDto: CreateUserDto) {
@@ -43,49 +41,19 @@ export class UserService {
       );
   }
 
-  public async addAvatar(
-    userId: number,
-    imageBuffer: Buffer,
-    filename: string,
-  ) {
-    const queryRunner = this.connection.createQueryRunner();
-
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
+  public async addAvatar(userId: number, file: Express.Multer.File) {
     try {
-      const user = await queryRunner.manager.findOne(User, {
-        where: { id: userId },
-      });
-      const currentAvatarId = user.avatarId;
-      const avatar = await this.dbFileService.uploadDatabaseFileWithQueryRunner(
-        imageBuffer,
-        filename,
-        queryRunner,
-      );
+      const user = await this.userRepository.findOne({ where: { id: userId } });
 
-      await queryRunner.manager.update(User, userId, {
-        avatarId: avatar.id,
-      });
-
-      if (currentAvatarId) {
-        await this.dbFileService.deleteFileWithQueryRunner(
-          currentAvatarId,
-          queryRunner,
-        );
+      if (!user) {
+        throw new NotFoundException('User not found');
       }
 
-      await queryRunner.commitTransaction();
-
-      return {
-        filename: avatar.filename,
-        id: avatar.id,
-      };
-    } catch {
-      await queryRunner.rollbackTransaction();
-      throw new InternalServerErrorException();
-    } finally {
-      await queryRunner.release();
+      const fileData = await this.minioService.uploadFile(file);
+      user.avatar = fileData;
+      return await this.userRepository.save(user);
+    } catch (error) {
+      throw error;
     }
   }
 
@@ -121,13 +89,15 @@ export class UserService {
       throw new NotFoundException(`User not found`);
     }
 
-    if (user.avatar) {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      //@ts-expect-error
-      user.avatar.data = Buffer.from(user.avatar.data).toString('base64');
-    }
+    const imageLink = await this.minioService.getFile(user.avatar.fileName);
 
-    return classToPlain(user);
+    return classToPlain({
+      ...user,
+      avatar: {
+        ...user.avatar,
+        url: imageLink.url,
+      },
+    });
   }
 
   public async getUserByEmail(email: string) {

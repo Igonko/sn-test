@@ -47,7 +47,7 @@ export class UserController {
     @CurrentUser() user: CurrentUserDto,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    return this.userService.addAvatar(user.id, file.buffer, file.originalname);
+    return this.userService.addAvatar(user.id, file);
   }
 
   @Get()

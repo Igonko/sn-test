@@ -1,6 +1,6 @@
 import { Exclude } from 'class-transformer';
 import { EntityAutoDateAndId } from 'src/common/entities/entities';
-import DbFile from 'src/dbFile/enteties/file.entity';
+import Minio from 'src/minio/enteties/minio.entity';
 import { Customer } from 'src/stripe/entities/customer.entity';
 import { Column, Entity, JoinColumn, OneToOne } from 'typeorm';
 
@@ -40,14 +40,11 @@ export class User extends EntityAutoDateAndId {
   })
   confirmed: boolean;
 
-  @OneToOne(() => DbFile, {
+  @OneToOne(() => Minio, {
     nullable: true,
   })
-  @JoinColumn({ name: 'avatar_id' })
-  avatar?: DbFile;
-
-  @Column({ name: 'avatar_id', type: 'integer', nullable: true })
-  avatarId?: number;
+  @JoinColumn({ name: 'avatar' })
+  avatar?: Minio;
 
   @OneToOne(() => Customer, ({ user }) => user, {
     nullable: true,
