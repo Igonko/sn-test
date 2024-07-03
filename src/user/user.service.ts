@@ -90,14 +90,12 @@ export class UserService {
     }
 
     const imageLink = await this.minioService.getFile(user.avatar.fileName);
+    const plainedUser = classToPlain(user);
 
-    return classToPlain({
-      ...user,
-      avatar: {
-        ...user.avatar,
-        url: imageLink.url,
-      },
-    });
+    return {
+      ...plainedUser,
+      avatar: imageLink.url,
+    };
   }
 
   public async getUserByEmail(email: string) {
