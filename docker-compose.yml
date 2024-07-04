@@ -3,6 +3,7 @@ version: '3.8'
 volumes:
   pgdata:
   minio-data:
+  redis:
 
 services:
   db:
@@ -31,6 +32,7 @@ services:
       - '3000:3000'
     depends_on:
       - db
+      - redis
     volumes:
       - ./src:/app/src
 
@@ -46,3 +48,24 @@ services:
     volumes:
       - minio-data:/data
     command: server /data --address ":${MINIO_PORT}" --console-address ":${MINIO_PORT_UI}"
+
+  redis:
+    image: redis:latest
+    command: ['redis-server']
+    container_name: redis
+    restart: always
+    env_file:
+      - '.env'
+    ports:
+      - '${REDIS_PORT}:${REDIS_PORT}'
+    volumes:
+      - ./redis/data:/data
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    ports:
+      - '8081:8081'
+    depends_on:
+      - redis

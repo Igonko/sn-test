@@ -1,3 +1,4 @@
+import { RedisService } from './../redis/redis.service';
 import {
   Controller,
   Post,
@@ -7,6 +8,7 @@ import {
   Param,
   Patch,
   Delete,
+  UseInterceptors,
 } from '@nestjs/common';
 import { PostService } from './post.service';
 import { CreatePostDto, GetPostDto, PostBodyDto } from './dto/post.dto';
@@ -23,11 +25,15 @@ import { CurrentUserDto } from 'src/user/dto/current-user.dto';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { User } from 'src/user/entities/user.entity';
+import { CacheInterceptor } from '@nestjs/cache-manager';
 
 @ApiTags('Post')
 @Controller('post')
 export class PostController {
-  constructor(private readonly postService: PostService) {}
+  constructor(
+    private readonly postService: PostService,
+    private readonly redisService: RedisService,
+  ) {}
 
   @Post()
   @ApiOperation({ summary: 'Create post' })
@@ -57,6 +63,7 @@ export class PostController {
     @Body() postBodyDto: PostBodyDto,
     @CurrentUser() user: User,
   ) {
+    console.log('__________________');
     return await this.postService.getAllPosts(postBodyDto, user);
   }
 
@@ -103,8 +110,16 @@ export class PostController {
   })
   @ApiBearerAuth('JWT')
   @ApiSecurity('JWT')
+  //@UseInterceptors(CacheInterceptor)
   @UseGuards(CognitoJwtAuthGuard)
   async getPost(@Param('id') id: string, @CurrentUser() user: User) {
-    return await this.postService.getPost(+id, user);
+    const cachedPost = await this.redisService.get(`post-${id}`);
+    if (cachedPost) {
+      return cachedPost;
+    }
+
+    const post = await this.postService.getPost(+id, user);
+    await this.redisService.set(`post-${post.id}`, post);
+    return post;
   }
 }

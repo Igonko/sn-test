@@ -7,6 +7,7 @@ import {
 } from './dto/auth.dto';
 import { AwsCognitoService } from 'src/aws/aws-cognito.service';
 import { UserService } from 'src/user/user.service';
+import { User } from 'src/user/entities/user.entity';
 
 @Injectable()
 export class AuthService {

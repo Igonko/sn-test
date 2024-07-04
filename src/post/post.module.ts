@@ -13,6 +13,7 @@ import { CommentModule } from 'src/comment/comment.module';
 import { Comment } from 'src/comment/entities/comment.entity';
 import { StripeModule } from 'src/stripe/stripe.module';
 import { User } from 'src/user/entities/user.entity';
+import { RedisModule } from 'src/redis/redis.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { User } from 'src/user/entities/user.entity';
     UserModule,
     StripeModule,
     CommentModule,
+    RedisModule,
     PassportModule.register({ defaultStrategy: 'cognitoJwtStrategy' }),
   ],
   controllers: [PostController],

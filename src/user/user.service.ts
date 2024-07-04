@@ -12,6 +12,7 @@ import { AwsCognitoService } from '../aws/aws-cognito.service';
 import { Repository } from 'typeorm';
 import { classToPlain } from 'class-transformer';
 import { MinioService } from 'src/minio/minio.service';
+import Minio from 'src/minio/enteties/minio.entity';
 
 @Injectable()
 export class UserService {
@@ -89,22 +90,38 @@ export class UserService {
       throw new NotFoundException(`User not found`);
     }
 
-    const imageLink = await this.minioService.getFile(user.avatar.fileName);
-    const plainedUser = classToPlain(user);
+    if (user.avatar?.fileName) {
+      const imageLink = await this.minioService.getFile(user.avatar.fileName);
+      const plainedUser = classToPlain(user);
 
-    return {
-      ...plainedUser,
-      avatar: imageLink.url,
-    };
+      return {
+        ...plainedUser,
+        avatar: imageLink.url,
+      };
+    }
+
+    return classToPlain(user);
   }
 
-  public async getUserByEmail(email: string) {
+  public async getUserByEmail(
+    email: string,
+  ): Promise<(Omit<User, 'avatar'> & { avatar: string }) | User> {
     const user = await this.userRepository.findOne({ where: { email } });
     if (!user) {
       throw new NotFoundException(`User not found`);
     }
 
-    return classToPlain(user);
+    if (user.avatar?.fileName) {
+      const imageLink = await this.minioService.getFile(user.avatar.fileName);
+      const plainedUser = classToPlain(user);
+
+      return {
+        ...(plainedUser as Omit<User, 'avatar'>),
+        avatar: imageLink.url,
+      };
+    }
+
+    return classToPlain(user) as User;
   }
 
   public async updateConfirm(email: string, confirmationCode: string) {

@@ -52,8 +52,9 @@ export class PostService {
       }
     }
 
-    user.postsChecked += 1;
-    await this.userRepository.save(user);
+    await this.userRepository.update(user.id, {
+      postsChecked: (user.postsChecked += 1),
+    });
   }
 
   public async create(createPostDto: CreatePostDto, userId: number) {
