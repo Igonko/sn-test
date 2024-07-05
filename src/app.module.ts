@@ -11,6 +11,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
 import { StripeModule } from './stripe/stripe.module';
 import { MinioModule } from './minio/minio.module';
+import { join } from 'path';
+import { User1720163931282 } from './migrations/1720163931282-User';
+import { Comment1720166704970 } from './migrations/1720166704970-Comment';
 
 @Module({
   imports: [
@@ -33,10 +36,15 @@ import { MinioModule } from './minio/minio.module';
           username: configService.get('DB_USERNAME'),
           password: configService.get('DB_PASSWORD'),
           database: configService.get('DB_NAME'),
-          entities: [__dirname + '/**/*.entity{.ts,.js}'],
+          entities: [join(__dirname, '**', '*.entity.{ts,js}')],
+          migrations: [User1720163931282, Comment1720166704970],
+          migrationsTableName: 'migration',
           migrationsRun: true,
-          synchronize: true,
-          // logging: true,
+          synchronize: false,
+          logging: true,
+          cli: {
+            migrationsDir: 'src/migrations',
+          },
         };
       },
       inject: [ConfigService],
