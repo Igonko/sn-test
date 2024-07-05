@@ -37,7 +37,7 @@ import { Comment1720166704970 } from './migrations/1720166704970-Comment';
           password: configService.get('DB_PASSWORD'),
           database: configService.get('DB_NAME'),
           entities: [join(__dirname, '**', '*.entity.{ts,js}')],
-          migrations: [User1720163931282, Comment1720166704970],
+          migrations: [join(__dirname, 'src', 'migrations', '*.{ts,js}')],
           migrationsTableName: 'migration',
           migrationsRun: true,
           synchronize: false,
