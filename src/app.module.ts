@@ -12,8 +12,6 @@ import { AuthModule } from './auth/auth.module';
 import { StripeModule } from './stripe/stripe.module';
 import { MinioModule } from './minio/minio.module';
 import { join } from 'path';
-import { User1720163931282 } from './migrations/1720163931282-User';
-import { Comment1720166704970 } from './migrations/1720166704970-Comment';
 
 @Module({
   imports: [
