@@ -25,16 +25,13 @@ export class UserService {
   ) {}
 
   private async existUser(createUserDto: CreateUserDto) {
-    const isUserExist = await this.userRepository.findOne({
-      where: [
-        {
-          email: createUserDto.email,
-        },
-        {
-          username: createUserDto.username,
-        },
-      ],
-    });
+    const isUserExist = await this.userRepository
+      .createQueryBuilder('user')
+      .where('user.email = :email', { email: createUserDto.email })
+      .orWhere('user.username = :username', {
+        username: createUserDto.username,
+      })
+      .getOne();
 
     if (isUserExist)
       throw new BadRequestException(
@@ -44,7 +41,10 @@ export class UserService {
 
   public async addAvatar(userId: number, file: Express.Multer.File) {
     try {
-      const user = await this.userRepository.findOne({ where: { id: userId } });
+      const user = await this.userRepository
+        .createQueryBuilder('user')
+        .where('user.id = :id', { id: userId })
+        .getOne();
 
       if (!user) {
         throw new NotFoundException('User not found');
@@ -81,10 +81,12 @@ export class UserService {
   }
 
   public async getUser(cognitoId: string) {
-    const user = await this.userRepository.findOne({
-      where: { cognitoId },
-      relations: ['avatar', 'customer'],
-    });
+    const user = await this.userRepository
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.avatar', 'avatar')
+      .leftJoinAndSelect('user.customer', 'customer')
+      .where('user.cognitoId = :cognitoId', { cognitoId })
+      .getOne();
 
     if (!user) {
       throw new NotFoundException(`User not found`);
@@ -106,7 +108,11 @@ export class UserService {
   public async getUserByEmail(
     email: string,
   ): Promise<(Omit<User, 'avatar'> & { avatar: string }) | User> {
-    const user = await this.userRepository.findOne({ where: { email } });
+    const user = await this.userRepository
+      .createQueryBuilder('user')
+      .where('user.email = :email', { email })
+      .getOne();
+
     if (!user) {
       throw new NotFoundException(`User not found`);
     }
