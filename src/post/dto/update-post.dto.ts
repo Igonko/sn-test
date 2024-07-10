@@ -9,4 +9,10 @@ export class UpdatePostDto extends PartialType(CreatePostDto) {
     message: "Post can't be longer than 1024 characters",
   })
   post: string;
+
+  @ApiProperty()
+  @MaxLength(128, {
+    message: "Title can't be longer than 128 characters",
+  })
+  title: string;
 }

@@ -12,6 +12,9 @@ import { AuthModule } from './auth/auth.module';
 import { StripeModule } from './stripe/stripe.module';
 import { MinioModule } from './minio/minio.module';
 import { join } from 'path';
+import { User1720163931282 } from './migrations/1720163931282-User';
+import { Comment1720166704970 } from './migrations/1720166704970-Comment';
+import { AddTitleFieldToThePost1720597354774 } from './migrations/1720597354774-AddTitleFieldToThePost';
 
 @Module({
   imports: [
@@ -27,6 +30,7 @@ import { join } from 'path';
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => {
+        console.log(join(__dirname, 'src', 'migrations', '*.{ts,js}'));
         return {
           type: 'postgres',
           host: configService.get('DB_HOST'),
@@ -35,7 +39,11 @@ import { join } from 'path';
           password: configService.get('DB_PASSWORD'),
           database: configService.get('DB_NAME'),
           entities: [join(__dirname, '**', '*.entity.{ts,js}')],
-          migrations: [join(__dirname, 'src', 'migrations', '*.{ts,js}')],
+          migrations: [
+            User1720163931282,
+            Comment1720166704970,
+            AddTitleFieldToThePost1720597354774,
+          ],
           migrationsTableName: 'migration',
           migrationsRun: true,
           synchronize: false,

@@ -7,6 +7,14 @@ import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 @Entity('post')
 export class Post extends EntityAutoDateAndId {
   @Column({
+    name: 'title',
+    type: 'varchar',
+    length: '128',
+    default: '',
+  })
+  title: string;
+
+  @Column({
     name: 'post',
     type: 'varchar',
     length: 1024,
@@ -18,9 +26,9 @@ export class Post extends EntityAutoDateAndId {
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @OneToMany(() => Like, (like) => like.post)
+  @OneToMany(() => Like, (like) => like.post, { onDelete: 'CASCADE' })
   like: Like[];
 
-  @OneToMany(() => Comment, (comment) => comment.post)
+  @OneToMany(() => Comment, (comment) => comment.post, { onDelete: 'CASCADE' })
   comment: Comment[];
 }
